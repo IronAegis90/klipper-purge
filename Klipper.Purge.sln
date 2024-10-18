@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AD904CC4-0A8D-4A02-9675-31B618115493}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Klipper.Purge.Console", "src\Klipper.Purge.Console\Klipper.Purge.Console.csproj", "{7D8E61AC-77B2-43AE-96B1-138FAA59CA6D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Klipper.Purge.Console", "src\Klipper.Purge.Console\Klipper.Purge.Console.csproj", "{66F1B11B-3876-4EBE-9E22-6C5D3AF2B3D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,8 +24,18 @@ Global
 		{542B33B9-EF7C-4651-A058-F00623A1E1B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{542B33B9-EF7C-4651-A058-F00623A1E1B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{542B33B9-EF7C-4651-A058-F00623A1E1B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9498599F-8390-4094-BD06-0B8B93C07DDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9498599F-8390-4094-BD06-0B8B93C07DDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9498599F-8390-4094-BD06-0B8B93C07DDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9498599F-8390-4094-BD06-0B8B93C07DDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66F1B11B-3876-4EBE-9E22-6C5D3AF2B3D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66F1B11B-3876-4EBE-9E22-6C5D3AF2B3D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66F1B11B-3876-4EBE-9E22-6C5D3AF2B3D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66F1B11B-3876-4EBE-9E22-6C5D3AF2B3D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7D8E61AC-77B2-43AE-96B1-138FAA59CA6D} = {AD904CC4-0A8D-4A02-9675-31B618115493}
+		{9498599F-8390-4094-BD06-0B8B93C07DDA} = {AD904CC4-0A8D-4A02-9675-31B618115493}
+		{66F1B11B-3876-4EBE-9E22-6C5D3AF2B3D7} = {AD904CC4-0A8D-4A02-9675-31B618115493}
 	EndGlobalSection
 EndGlobal

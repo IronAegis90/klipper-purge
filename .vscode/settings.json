@@ -1,3 +1,13 @@
 {
-    "dotnet.defaultSolution": "Klipper.Purge.sln"
+    "dotnet.defaultSolution": "Klipper.Purge.sln",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/bin/": true,
+        "**/obj/": true
+    }
 }
