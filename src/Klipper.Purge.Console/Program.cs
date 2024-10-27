@@ -1,5 +1,6 @@
 ﻿using Klipper.Purge.Console.Jobs;
 using Klipper.Purge.Console.Moonraker;
+using Klipper.Purge.Console.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,6 +19,8 @@ namespace Klipper.Purge.Console
                 .AddJsonFile("appsettings.json")
                 .AddEnvironmentVariables()
                 .Build();
+
+            builder.Services.AddOptions<FilePurgeOptions>().BindConfiguration("Jobs:FilePurge").ValidateOnStart();
 
             builder.Services.AddQuartz(x =>
             {

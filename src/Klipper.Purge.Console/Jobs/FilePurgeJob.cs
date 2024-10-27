@@ -1,7 +1,9 @@
 using System.Security.Cryptography.X509Certificates;
 using Klipper.Purge.Console.Moonraker;
+using Klipper.Purge.Console.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Quartz;
 
 namespace Klipper.Purge.Console.Jobs
@@ -10,11 +12,18 @@ namespace Klipper.Purge.Console.Jobs
     {
         private readonly ILogger<FilePurgeJob> _logger;
 
+        private readonly IOptions<FilePurgeOptions> _options;
+
         private readonly IMoonrakerClient _moonrakerClient;
 
-        public FilePurgeJob(ILogger<FilePurgeJob> logger, IMoonrakerClient moonrakerClient)
+        public readonly DateTime _purgeBefore;
+
+        public readonly bool _excludeQueued;
+
+        public FilePurgeJob(ILogger<FilePurgeJob> logger, IOptions<FilePurgeOptions> options, IMoonrakerClient moonrakerClient)
         {
             _logger = logger;
+            _options = options;
             _moonrakerClient = moonrakerClient;
         }
 
@@ -38,13 +47,38 @@ namespace Klipper.Purge.Console.Jobs
             quartz.AddTrigger(trigger => trigger.ForJob(jobKey).WithCronSchedule(schedule));
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogDebug("Executing file purge");
+            _logger.LogInformation("Starting file purge");
 
-            var rresult = _moonrakerClient.DirectoriesAsync();
 
-            return Task.CompletedTask;
+            var jobListTask = _moonrakerClient.ListJobsAsync();
+            var fileListTask = _moonrakerClient.ListFilesAsync();
+            var fileListResult = await fileListTask;
+
+            if (fileListResult == null || fileListResult.Files.Any() == false)
+                return;
+
+            var jobListResult = await jobListTask;
+            var jobs = jobListResult?.Jobs ?? new List<Job>();
+            var files = fileListResult.Files;
+
+            foreach (var file in files)
+            {
+                if (file.Modified > _purgeBefore)
+                    continue;
+
+                if (jobs.Any(x => x.Path == file.Path) && _excludeQueued)
+                    continue;
+
+                // if (jobs.Any(x => x.Path == file.Path) && await _moonrakerClient.DeleteJob())
+                // {
+
+                // }
+                // Delete file
+            }
+
+            return;
         }
     }
 }

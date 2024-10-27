@@ -2,6 +2,8 @@ namespace Klipper.Purge.Console.Moonraker
 {
     public interface IMoonrakerClient
     {
-        Task<List<string>> DirectoriesAsync();
+        Task<FileListResult?> ListFilesAsync();
+
+        Task<JobListResult?> ListJobsAsync();
     }
 }
