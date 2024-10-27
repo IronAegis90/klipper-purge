@@ -19,20 +19,21 @@ namespace Klipper.Purge.Console
                 .AddJsonFile("appsettings.json")
                 .AddEnvironmentVariables()
                 .Build();
+            var filePurgeSection = configuration.GetSection("Jobs:FilePurge");
 
-            builder.Services.AddOptions<FilePurgeOptions>().BindConfiguration("Jobs:FilePurge").ValidateOnStart();
-
-            builder.Services.AddQuartz(x =>
+            builder.Services.AddQuartz(quartz =>
             {
-                x.SchedulerName = "Klipper Purge";
+                quartz.SchedulerName = "Klipper Purge";
 
-                FilePurgeJob.Register(configuration, x);
+                FilePurgeJob.Register(filePurgeSection.Get<FilePurgeOptions>() ?? new FilePurgeOptions(), quartz);
             });
 
             builder.Services.AddQuartzHostedService(x =>
             {
                 x.WaitForJobsToComplete = true;
             });
+
+            builder.Services.AddOptions<FilePurgeOptions>().Bind(filePurgeSection);
 
             builder.Services.AddSingleton<IMoonrakerClient, MoonrakerClient>();
 

@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace Klipper.Purge.Console.Moonraker
@@ -7,7 +7,7 @@ namespace Klipper.Purge.Console.Moonraker
     {
         public required string Path { get; set; }
 
-        [JsonConverter(typeof(UnixDateTimeConverter))]
-        public required DateTime Modified { get; set; }
+
+        public required float Modified { get; set; }
     }
 }

@@ -1,7 +1,5 @@
-using System.Security.Cryptography.X509Certificates;
 using Klipper.Purge.Console.Moonraker;
 using Klipper.Purge.Console.Options;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
@@ -16,41 +14,38 @@ namespace Klipper.Purge.Console.Jobs
 
         private readonly IMoonrakerClient _moonrakerClient;
 
-        public readonly DateTime _purgeBefore;
-
-        public readonly bool _excludeQueued;
+        private readonly DateTime _purgeBefore;
 
         public FilePurgeJob(ILogger<FilePurgeJob> logger, IOptions<FilePurgeOptions> options, IMoonrakerClient moonrakerClient)
         {
             _logger = logger;
             _options = options;
             _moonrakerClient = moonrakerClient;
+
+            _purgeBefore = DateTime.Now.AddDays(_options.Value.PurgeOlderThanDays * -1).Date;
         }
 
-        public static void Register(IConfiguration configuration, IServiceCollectionQuartzConfigurator quartz)
+        public static void Register(FilePurgeOptions options, IServiceCollectionQuartzConfigurator quartz)
         {
-            if (configuration.GetValue<bool>("Jobs:FilePurge:Enabled") == false)
+            if (options.Enabled == false)
                 return;
 
             var jobKey = new JobKey("file-purge");
 
             quartz.AddJob<FilePurgeJob>(jobKey, job => job.WithDescription(""));
 
-            if (configuration.GetValue<bool>("Jobs:FilePurge:RunOnStartup"))
+            if (options.RunOnStartup)
                 quartz.AddTrigger(trigger => trigger.ForJob(jobKey).StartNow());
 
-            var schedule = configuration.GetValue<string>("Jobs:FilePurge:Schedule");
-
-            if (schedule is null || CronExpression.IsValidExpression(schedule) == false)
+            if (CronExpression.IsValidExpression(options.Schedule) == false)
                 return;
 
-            quartz.AddTrigger(trigger => trigger.ForJob(jobKey).WithCronSchedule(schedule));
+            quartz.AddTrigger(trigger => trigger.ForJob(jobKey).WithCronSchedule(options.Schedule));
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
             _logger.LogInformation("Starting file purge");
-
 
             var jobListTask = _moonrakerClient.ListJobsAsync();
             var fileListTask = _moonrakerClient.ListFilesAsync();
@@ -65,7 +60,7 @@ namespace Klipper.Purge.Console.Jobs
 
             foreach (var file in files)
             {
-                if (file.Modified > _purgeBefore)
+                if (DateTime.UnixEpoch.AddSeconds(file.Modified) > _purgeBefore)
                     continue;
 
                 if (jobs.Any(x => x.Path == file.Path) && _excludeQueued)
@@ -79,6 +74,18 @@ namespace Klipper.Purge.Console.Jobs
             }
 
             return;
+        }
+
+        public bool ProcessFile(Moonraker.File file)
+        {
+            var lastModified = DateTime.UnixEpoch.AddSeconds(file.Modified);
+
+            if (lastModified > _purgeBefore)
+                return false;
+
+
+
+            return false;
         }
     }
 }
