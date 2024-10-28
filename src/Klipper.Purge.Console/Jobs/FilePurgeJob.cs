@@ -21,8 +21,7 @@ namespace Klipper.Purge.Console.Jobs
             _logger = logger;
             _options = options;
             _moonrakerClient = moonrakerClient;
-
-            _purgeBefore = DateTime.Now.AddDays(_options.Value.PurgeOlderThanDays * -1).Date;
+            _purgeBefore = DateTime.Now.AddDays(_options.Value.PurgeOlderThanDays * -1);
         }
 
         public static void Register(FilePurgeOptions options, IServiceCollectionQuartzConfigurator quartz)
@@ -54,38 +53,47 @@ namespace Klipper.Purge.Console.Jobs
             if (fileListResult == null || fileListResult.Files.Any() == false)
                 return;
 
+            var files = fileListResult.Files;
+
+            _logger.LogInformation($"{files.Count} files to process");
+
             var jobListResult = await jobListTask;
             var jobs = jobListResult?.Jobs ?? new List<Job>();
-            var files = fileListResult.Files;
+
+            _logger.LogInformation($"{jobs.Count} jobs currently queued");
 
             foreach (var file in files)
             {
-                if (DateTime.UnixEpoch.AddSeconds(file.Modified) > _purgeBefore)
-                    continue;
+                _logger.LogInformation($"Processing file {file.Path}");
 
-                if (jobs.Any(x => x.Path == file.Path) && _excludeQueued)
+                var test = DateTime.UnixEpoch.AddSeconds(file.Modified);
+                if (DateTime.UnixEpoch.AddSeconds(file.Modified) > _purgeBefore)
+                {
+                    _logger.LogInformation("File is too new");
+
                     continue;
+                }
+
+                if (jobs.Any(x => x.Path == file.Path) && _options.Value.ExcludeQueued)
+                {
+                    _logger.LogInformation("File is queued and queued items are excluded");
+
+                    continue;
+                }
+
 
                 // if (jobs.Any(x => x.Path == file.Path) && await _moonrakerClient.DeleteJob())
                 // {
 
                 // }
                 // Delete file
+
+                _logger.LogInformation("Deleting file");
+
+                _moonrakerClient.DeleteFile(file.Path);
             }
 
             return;
-        }
-
-        public bool ProcessFile(Moonraker.File file)
-        {
-            var lastModified = DateTime.UnixEpoch.AddSeconds(file.Modified);
-
-            if (lastModified > _purgeBefore)
-                return false;
-
-
-
-            return false;
         }
     }
 }

@@ -5,5 +5,7 @@ namespace Klipper.Purge.Console.Moonraker
         Task<FileListResult?> ListFilesAsync();
 
         Task<JobListResult?> ListJobsAsync();
+
+        Task<bool> DeleteFile(string path);
     }
 }

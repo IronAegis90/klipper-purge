@@ -46,6 +46,11 @@ namespace Klipper.Purge.Console.Moonraker
             return JsonConvert.DeserializeObject<JobListResult>(result);
         }
 
+        public Task<bool> DeleteFile(string path)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Dispose()
         {
             _httpClient.Dispose();
