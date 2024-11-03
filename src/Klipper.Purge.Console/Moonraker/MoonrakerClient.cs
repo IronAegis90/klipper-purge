@@ -22,7 +22,7 @@ namespace Klipper.Purge.Console.Moonraker
             };
         }
 
-        public async Task<PrintStatusResult?> GetPrintStatusAsync()
+        public async Task<Printer?> GetPrinterStatusAsync()
         {
             var response = await _httpClient.GetAsync("/printer/objects/query?print_stats");
 
@@ -31,12 +31,12 @@ namespace Klipper.Purge.Console.Moonraker
 
             var result = await response.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<PrintStatusResult>(result);
+            return JsonConvert.DeserializeObject<Printer>(result);
         }
 
         public async Task<FileListResult?> ListFilesAsync()
         {
-            var response = await _httpClient.GetAsync("/server/files/list?root=gcodes");
+            var response = await _httpClient.GetAsync("/server/files/list");
 
             if (response.IsSuccessStatusCode == false)
                 return null;
@@ -46,7 +46,7 @@ namespace Klipper.Purge.Console.Moonraker
             return JsonConvert.DeserializeObject<FileListResult>(result);
         }
 
-        public async Task<JobListResult?> ListJobsAsync()
+        public async Task<JobQueueStatus?> GetJobQueueStatusAsync()
         {
             var response = await _httpClient.GetAsync("/server/job_queue/status");
 
@@ -55,17 +55,21 @@ namespace Klipper.Purge.Console.Moonraker
 
             var result = await response.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<JobListResult>(result);
+            return JsonConvert.DeserializeObject<JobQueueStatus>(result);
         }
 
-        public Task<bool> DeleteFileAsync(string path)
+        public async Task<bool> DeleteFileAsync(string path)
         {
-            throw new NotImplementedException();
+            var response = await _httpClient.DeleteAsync($"/server/files/gcodes/{path}");
+
+            return response.IsSuccessStatusCode;
         }
 
-        public Task<bool> DeleteJobAsync(string id)
+        public async Task<bool> DeleteJobAsync(string id)
         {
-            throw new NotImplementedException();
+            var response = await _httpClient.DeleteAsync($"/server/job_queue/job?job_ids={id}");
+
+            return response.IsSuccessStatusCode;
         }
 
         public void Dispose()

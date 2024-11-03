@@ -1,18 +1,17 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace Klipper.Purge.Console.Moonraker
 {
     public class Job
     {
-        [JsonPropertyName("job_id")]
+        [JsonProperty("job_id")]
         public required string Id { get; set; }
 
-        [JsonPropertyName("filename")]
+        [JsonProperty("filename")]
         public required string Path { get; set; }
 
-        [JsonPropertyName("time_added")]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
-        public required DateTime AddedOn { get; set; }
+        [JsonProperty("time_added")]
+        public required double AddedOn { get; set; }
     }
 }

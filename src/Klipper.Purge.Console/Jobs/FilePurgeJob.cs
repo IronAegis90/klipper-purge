@@ -46,31 +46,33 @@ namespace Klipper.Purge.Console.Jobs
         {
             _logger.LogInformation("Starting file purge");
 
-            var printStatusTask = _moonrakerClient.GetPrintStatusAsync();
-            var jobListTask = _moonrakerClient.ListJobsAsync();
+            var printerStatusTask = _moonrakerClient.GetPrinterStatusAsync();
+            var jobQueueStatusTask = _moonrakerClient.GetJobQueueStatusAsync();
             var fileListTask = _moonrakerClient.ListFilesAsync();
             var fileListResult = await fileListTask;
 
-            if (fileListResult == null || fileListResult.Files.Any() == false)
-                return;
+            if (fileListResult?.Files == null)
+                throw new InvalidOperationException("Unable to retrieve file list");
 
-            var files = fileListResult.Files;
+            _logger.LogInformation($"{fileListResult.Files.Count} files to process");
 
-            _logger.LogInformation($"{files.Count} files to process");
+            var jobQueueStatusResult = await jobQueueStatusTask;
 
-            var jobListResult = await jobListTask;
-            var jobs = jobListResult?.Jobs ?? new List<Job>();
+            if (jobQueueStatusResult?.Result?.Jobs == null)
+                throw new InvalidOperationException("Unable to retrieve current job queue");
 
-            _logger.LogInformation($"{jobs.Count} jobs currently queued");
+            _logger.LogInformation($"{jobQueueStatusResult.Result.Jobs.Count} jobs currently queued");
 
-            var printStatusResult = await printStatusTask;
-            var printStatus = printStatusResult ?? throw new InvalidOperationException("Unable to obtain the current print's state");
+            var printerStatusResult = await printerStatusTask;
 
-            foreach (var file in files)
+            if (printerStatusResult?.Result?.Status?.PrintStatus == null)
+                throw new InvalidOperationException("Unable to retrieve current print status");
+
+            foreach (var file in fileListResult.Files)
             {
                 _logger.LogInformation($"Processing file {file.Path}");
 
-                if (string.Equals("printing", printStatus.State, StringComparison.CurrentCultureIgnoreCase) && string.Equals(printStatus.Filename, file.Path, StringComparison.CurrentCultureIgnoreCase))
+                if (string.Equals("printing", printerStatusResult.Result.Status.PrintStatus.State, StringComparison.CurrentCultureIgnoreCase) && string.Equals(printerStatusResult.Result.Status.PrintStatus.Filename, file.Path, StringComparison.CurrentCultureIgnoreCase))
                 {
                     _logger.LogInformation("File is currently being printed");
 
@@ -84,7 +86,7 @@ namespace Klipper.Purge.Console.Jobs
                     continue;
                 }
 
-                if (jobs.Any(x => string.Equals(x.Path, file.Path, StringComparison.CurrentCultureIgnoreCase)) && _options.Value.ExcludeQueued)
+                if (jobQueueStatusResult.Result.Jobs.Any(x => string.Equals(x.Path, file.Path, StringComparison.CurrentCultureIgnoreCase)) && _options.Value.ExcludeQueued)
                 {
                     _logger.LogInformation("File is queued and queued items are excluded");
 
@@ -93,7 +95,7 @@ namespace Klipper.Purge.Console.Jobs
 
                 _logger.LogInformation("Removing file(s) from queue");
 
-                await Task.WhenAll(jobs.Where(x => x.Path == file.Path).Select(x => _moonrakerClient.DeleteJobAsync(x.Path)));
+                await Task.WhenAll(jobQueueStatusResult.Result.Jobs.Where(x => x.Path == file.Path).Select(x => _moonrakerClient.DeleteJobAsync(x.Path)));
 
                 _logger.LogInformation("Deleting file");
 
