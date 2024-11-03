@@ -46,6 +46,7 @@ namespace Klipper.Purge.Console.Jobs
         {
             _logger.LogInformation("Starting file purge");
 
+            var printStatusTask = _moonrakerClient.GetPrintStatusAsync();
             var jobListTask = _moonrakerClient.ListJobsAsync();
             var fileListTask = _moonrakerClient.ListFilesAsync();
             var fileListResult = await fileListTask;
@@ -62,11 +63,20 @@ namespace Klipper.Purge.Console.Jobs
 
             _logger.LogInformation($"{jobs.Count} jobs currently queued");
 
+            var printStatusResult = await printStatusTask;
+            var printStatus = printStatusResult ?? throw new InvalidOperationException("Unable to obtain the current print's state");
+
             foreach (var file in files)
             {
                 _logger.LogInformation($"Processing file {file.Path}");
 
-                var test = DateTime.UnixEpoch.AddSeconds(file.Modified);
+                if (string.Equals("printing", printStatus.State, StringComparison.CurrentCultureIgnoreCase) && string.Equals(printStatus.Filename, file.Path, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    _logger.LogInformation("File is currently being printed");
+
+                    continue;
+                }
+
                 if (DateTime.UnixEpoch.AddSeconds(file.Modified) > _purgeBefore)
                 {
                     _logger.LogInformation("File is too new");
@@ -74,23 +84,20 @@ namespace Klipper.Purge.Console.Jobs
                     continue;
                 }
 
-                if (jobs.Any(x => x.Path == file.Path) && _options.Value.ExcludeQueued)
+                if (jobs.Any(x => string.Equals(x.Path, file.Path, StringComparison.CurrentCultureIgnoreCase)) && _options.Value.ExcludeQueued)
                 {
                     _logger.LogInformation("File is queued and queued items are excluded");
 
                     continue;
                 }
 
+                _logger.LogInformation("Removing file(s) from queue");
 
-                // if (jobs.Any(x => x.Path == file.Path) && await _moonrakerClient.DeleteJob())
-                // {
-
-                // }
-                // Delete file
+                await Task.WhenAll(jobs.Where(x => x.Path == file.Path).Select(x => _moonrakerClient.DeleteJobAsync(x.Path)));
 
                 _logger.LogInformation("Deleting file");
 
-                _moonrakerClient.DeleteFile(file.Path);
+                await _moonrakerClient.DeleteFileAsync(file.Path);
             }
 
             return;

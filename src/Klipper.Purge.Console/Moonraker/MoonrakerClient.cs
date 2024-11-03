@@ -22,6 +22,18 @@ namespace Klipper.Purge.Console.Moonraker
             };
         }
 
+        public async Task<PrintStatusResult?> GetPrintStatusAsync()
+        {
+            var response = await _httpClient.GetAsync("/printer/objects/query?print_stats");
+
+            if (response.IsSuccessStatusCode == false)
+                return null;
+
+            var result = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<PrintStatusResult>(result);
+        }
+
         public async Task<FileListResult?> ListFilesAsync()
         {
             var response = await _httpClient.GetAsync("/server/files/list?root=gcodes");
@@ -46,7 +58,12 @@ namespace Klipper.Purge.Console.Moonraker
             return JsonConvert.DeserializeObject<JobListResult>(result);
         }
 
-        public Task<bool> DeleteFile(string path)
+        public Task<bool> DeleteFileAsync(string path)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> DeleteJobAsync(string id)
         {
             throw new NotImplementedException();
         }
