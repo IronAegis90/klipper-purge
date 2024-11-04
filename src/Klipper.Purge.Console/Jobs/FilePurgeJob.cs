@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Klipper.Purge.Console.Moonraker;
 using Klipper.Purge.Console.Options;
 using Microsoft.Extensions.Logging;
@@ -46,33 +48,55 @@ namespace Klipper.Purge.Console.Jobs
         {
             _logger.LogInformation("Starting file purge");
 
-            var printerStatusTask = _moonrakerClient.GetPrinterStatusAsync();
-            var jobQueueStatusTask = _moonrakerClient.GetJobQueueStatusAsync();
-            var fileListTask = _moonrakerClient.ListFilesAsync();
-            var fileListResult = await fileListTask;
+            var listJobsTask = _moonrakerClient.ListJobsAsync();
+            var printStatusTask = _moonrakerClient.GetPrintStatusAsync();
+            var printStatusResult = await printStatusTask;
 
-            if (fileListResult?.Files == null)
-                throw new InvalidOperationException("Unable to retrieve file list");
-
-            _logger.LogInformation($"{fileListResult.Files.Count} files to process");
-
-            var jobQueueStatusResult = await jobQueueStatusTask;
-
-            if (jobQueueStatusResult?.Result?.Jobs == null)
-                throw new InvalidOperationException("Unable to retrieve current job queue");
-
-            _logger.LogInformation($"{jobQueueStatusResult.Result.Jobs.Count} jobs currently queued");
-
-            var printerStatusResult = await printerStatusTask;
-
-            if (printerStatusResult?.Result?.Status?.PrintStatus == null)
+            if (printStatusResult == null)
                 throw new InvalidOperationException("Unable to retrieve current print status");
 
-            foreach (var file in fileListResult.Files)
-            {
-                _logger.LogInformation($"Processing file {file.Path}");
+            var listJobsResult = await listJobsTask;
 
-                if (string.Equals("printing", printerStatusResult.Result.Status.PrintStatus.State, StringComparison.CurrentCultureIgnoreCase) && string.Equals(printerStatusResult.Result.Status.PrintStatus.Filename, file.Path, StringComparison.CurrentCultureIgnoreCase))
+            if (listJobsResult?.Jobs == null)
+                throw new InvalidOperationException("Unable to retrieve current job queue");
+
+            _logger.LogInformation($"{listJobsResult.Jobs.Count} jobs currently queued");
+
+            await ProcessDirectory("gcodes", string.Empty, printStatusResult, listJobsResult.Jobs);
+
+            return;
+        }
+
+        private async Task ProcessDirectory(string directoryName, string parent, PrintStatus printStatus, List<Job> jobs)
+        {
+            _logger.LogInformation($"Processing the {directoryName} directory");
+
+            var directoryPath = $"{parent}{directoryName}";
+            var listDirectoriesResult = await _moonrakerClient.ListDirectoriesAsync(directoryPath);
+
+            if (listDirectoriesResult?.Directories == null)
+                throw new InvalidOperationException("Unable to retrieve directory metadata");
+
+            await Task.WhenAll(listDirectoriesResult.Directories.Select(x => ProcessDirectory(x.Name, $"{directoryPath}/", printStatus, jobs)));
+
+            _logger.LogInformation($"{listDirectoriesResult.Files.Count} files to process");
+
+            foreach (var file in listDirectoriesResult.Files)
+            {
+                var fullFileName = $"{directoryPath}/{file.Name}";
+                var fileName = Regex.Replace(fullFileName, $"^gcodes/", string.Empty);
+
+                _logger.LogInformation($"Processing file {file.Name}");
+
+                if (Path.GetExtension(fileName) != ".gcode")
+                {
+                    _logger.LogInformation("File is not of type GCode and will not be deleted");
+
+                    continue;
+                }
+
+                if (string.Equals("printing", printStatus.State, StringComparison.CurrentCultureIgnoreCase) &&
+                    string.Equals(printStatus.Filename, fileName, StringComparison.CurrentCultureIgnoreCase))
                 {
                     _logger.LogInformation("File is currently being printed");
 
@@ -86,7 +110,8 @@ namespace Klipper.Purge.Console.Jobs
                     continue;
                 }
 
-                if (jobQueueStatusResult.Result.Jobs.Any(x => string.Equals(x.Path, file.Path, StringComparison.CurrentCultureIgnoreCase)) && _options.Value.ExcludeQueued)
+                if (jobs.Any(x => string.Equals(x.Name, fileName, StringComparison.CurrentCultureIgnoreCase)) &&
+                    _options.Value.ExcludeQueued)
                 {
                     _logger.LogInformation("File is queued and queued items are excluded");
 
@@ -95,14 +120,20 @@ namespace Klipper.Purge.Console.Jobs
 
                 _logger.LogInformation("Removing file(s) from queue");
 
-                await Task.WhenAll(jobQueueStatusResult.Result.Jobs.Where(x => x.Path == file.Path).Select(x => _moonrakerClient.DeleteJobAsync(x.Path)));
+                await Task.WhenAll(jobs.Where(x => x.Name == fileName).Select(x => _moonrakerClient.DeleteJobAsync(x.Id)));
 
                 _logger.LogInformation("Deleting file");
 
-                await _moonrakerClient.DeleteFileAsync(file.Path);
+                await _moonrakerClient.DeleteFileAsync(fileName);
             }
 
-            return;
+            var listUpdatedDirectoriesResult = await _moonrakerClient.ListDirectoriesAsync(directoryPath);
+
+            if (listUpdatedDirectoriesResult == null)
+                throw new InvalidOperationException("Unable to retrieve directory metadata");
+
+            if (listUpdatedDirectoriesResult.Directories.Any() == false && listUpdatedDirectoriesResult.Files.Any() == false)
+                await _moonrakerClient.DeleteDirectoryAsync(directoryPath);
         }
     }
 }

@@ -2,12 +2,11 @@ using Newtonsoft.Json;
 
 namespace Klipper.Purge.Console.Moonraker
 {
-    public class JobQueueResult
+    public class JobListResult
     {
-        [JsonProperty("queued_jobs")]
         public List<Job> Jobs { get; set; }
 
-        public JobQueueResult()
+        public JobListResult()
         {
             Jobs = new List<Job>();
         }

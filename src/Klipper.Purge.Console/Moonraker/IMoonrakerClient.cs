@@ -2,14 +2,16 @@ namespace Klipper.Purge.Console.Moonraker
 {
     public interface IMoonrakerClient
     {
-        Task<Printer?> GetPrinterStatusAsync();
+        Task<PrintStatus?> GetPrintStatusAsync();
 
-        Task<FileListResult?> ListFilesAsync();
+        Task<DirectoryListResult?> ListDirectoriesAsync(string parent);
 
-        Task<JobQueueStatus?> GetJobQueueStatusAsync();
+        Task<JobListResult?> ListJobsAsync();
 
         Task<bool> DeleteFileAsync(string path);
 
         Task<bool> DeleteJobAsync(string id);
+
+        Task<bool> DeleteDirectoryAsync(string path);
     }
 }

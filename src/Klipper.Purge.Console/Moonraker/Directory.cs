@@ -2,11 +2,9 @@ using Newtonsoft.Json;
 
 namespace Klipper.Purge.Console.Moonraker
 {
-    public class File
+    public class Directory
     {
-        [JsonProperty("filename")]
+        [JsonProperty("dirname")]
         public required string Name { get; set; }
-
-        public required float Modified { get; set; }
     }
 }

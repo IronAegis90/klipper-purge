@@ -1,5 +1,4 @@
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Klipper.Purge.Console.Moonraker
 {
@@ -9,7 +8,7 @@ namespace Klipper.Purge.Console.Moonraker
         public required string Id { get; set; }
 
         [JsonProperty("filename")]
-        public required string Path { get; set; }
+        public required string Name { get; set; }
 
         [JsonProperty("time_added")]
         public required double AddedOn { get; set; }

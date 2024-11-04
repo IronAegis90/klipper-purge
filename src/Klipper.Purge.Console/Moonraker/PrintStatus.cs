@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Klipper.Purge.Console.Moonraker
 {
     public class PrintStatus
