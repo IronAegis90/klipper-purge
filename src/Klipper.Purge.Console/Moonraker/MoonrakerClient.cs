@@ -48,11 +48,13 @@ namespace Klipper.Purge.Console.Moonraker
 
             var result = await response.Content.ReadAsStringAsync();
             var root = JObject.Parse(result);
+            var directories = root["result"]?["dirs"]?.ToString() ?? string.Empty;
+            var files = root["result"]?["files"]?.ToString() ?? string.Empty;
 
             return new DirectoryListResult()
             {
-                Directories = root["result"]["dirs"].Children().Select(x => x.ToObject<Directory>()).ToList(),
-                Files = root["result"]["files"].Children().Select(x => x.ToObject<File>()).ToList()
+                Directories = JsonConvert.DeserializeObject<List<Directory>>(directories) ?? new List<Directory>(),
+                Files = JsonConvert.DeserializeObject<List<File>>(files) ?? new List<File>()
             };
         }
 
@@ -65,10 +67,11 @@ namespace Klipper.Purge.Console.Moonraker
 
             var result = await response.Content.ReadAsStringAsync();
             var root = JObject.Parse(result);
+            var jobs = root["result"]?["queued_jobs"]?.ToString() ?? string.Empty;
 
             return new JobListResult()
             {
-                Jobs = root["result"]["queued_jobs"].Children().Select(x => x.ToObject<Job>()).ToList()
+                Jobs = JsonConvert.DeserializeObject<List<Job>>(jobs) ?? new List<Job>()
             };
         }
 
