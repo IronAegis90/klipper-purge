@@ -26,10 +26,3 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - name: Docker Build
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-    - name: Container
-      uses: actions/upload-artifact@v4
-      with:
-        name: code-coverage-report
-        path: output/test/code-coverage.html
