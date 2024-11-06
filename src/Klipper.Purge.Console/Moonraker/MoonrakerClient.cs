@@ -17,7 +17,7 @@ namespace Klipper.Purge.Console.Moonraker
             _logger = logger;
             _httpClient = new HttpClient()
             {
-                BaseAddress = new Uri(configuration.GetValue<string>("Moonraker:Url") ?? throw new InvalidConfigurationException())
+                BaseAddress = new Uri(configuration.GetValue<string>("MOONRAKER_URL") ?? throw new InvalidConfigurationException())
             };
         }
 
