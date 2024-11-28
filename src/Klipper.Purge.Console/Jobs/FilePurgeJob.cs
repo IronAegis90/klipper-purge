@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Klipper.Purge.Console.Moonraker;
 using Klipper.Purge.Console.Options;
