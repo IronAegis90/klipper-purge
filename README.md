@@ -10,7 +10,7 @@ Klipper-Purge is a light weight scheduled service designed to clear Klipper inst
 
 ### How to use this image
 
-`$ docker run --name voron2 ironaegis/klipper-purge -e MOONRAKER_URL='http://10.0.0.242:7125'`
+`$ docker run --name voron2 ironaegis/klipper-purge -e MOONRAKER_URL=http://10.0.0.242:7125`
 
 #### Disable file purge
 
