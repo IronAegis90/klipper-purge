@@ -11,7 +11,7 @@ namespace Klipper.Purge.Console.Options
         public bool RunOnStartup { get; init; } = true;
 
         [ConfigurationKeyName("FILE_PURGE_SCHEDULE")]
-        public string Schedule { get; init; } = "0 0 3 * * * *";
+        public string Schedule { get; init; } = "0 0 3 ? * *";
 
         [ConfigurationKeyName("FILE_PURGE_OLDER_THAN")]
         public int PurgeOlderThanDays { get; init; } = 7;

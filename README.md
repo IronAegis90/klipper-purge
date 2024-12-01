@@ -6,7 +6,7 @@
 
 # What is Klipper-Purge?
 
-Klipper-Purge is a light weight scheduled service designed to clear Klipper instances of files that are out of date and are not queued for future printing.
+Klipper-Purge is a light weight scheduled service designed to clear Klipper instances of files that are out of date and are not queued or currently printing.
 
 # How to use this image
 
@@ -26,9 +26,9 @@ Defaults to `true`. Will run the file purge service upon image startup rather th
 
 ## Set the file purge schedule
 
-`-e FILE_PURGE_SCHEDULE="0 0 6 * * * *"`
+`-e FILE_PURGE_SCHEDULE="0 0 6 ? * *"`
 
-Default to `0 0 3 * * * *` (Daily at 3 AM). Use CRON expression to set when and how often the file purge service should execute.
+Default to `0 0 3 ? * *` (Daily at 3 AM). Use CRON expression to set when and how often the file purge service should execute. See [here](https://www.quartz-scheduler.net/documentation/quartz-3.x/how-tos/crontrigger.html) for more examples.
 
 ## Exclude file that are in Klipper's job queue
 
