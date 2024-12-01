@@ -49,7 +49,7 @@ namespace Klipper.Purge.Console.Tests.Options
         {
             var instance = new FilePurgeOptions();
 
-            Assert.Equal("0 0 3 * * * *", instance.Schedule);
+            Assert.Equal("0 0 3 ? * *", instance.Schedule);
         }
 
         [Fact]
